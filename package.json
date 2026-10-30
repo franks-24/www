@@ -1,0 +1,10 @@
+{
+  "name": "franks24-www",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Static responsive homepage for Franks24",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --check assets/app.js && node --test tests/*.test.cjs"
+  }
+}
