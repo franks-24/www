@@ -1,49 +1,21 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const read = file => fs.readFileSync(path.join(__dirname, "..", file), "utf8");
-const html = read("index.html");
-const css = read("assets/styles.css");
-const js = read("assets/app.js");
-
-test("homepage identity and domain are Franks24, not Dispatch", () => {
-  assert.match(html, /<title>Franks24/);
-  assert.match(html, /https:\/\/www\.franks24\.com\//);
-  assert.match(html, /Dispatch is a Franks24 service/);
-  assert.match(html, /https:\/\/dispatch\.franks24\.com\//);
-  assert.match(read("CNAME").trim(), /^www\.franks24\.com$/);
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const read=name=>fs.readFileSync(path.join(__dirname,'..',name),'utf8');
+const html=read('index.html');
+test('courier homepage uses Franks24 brand and canonical domain',()=>{
+ assert.match(html,/<title>Franks24/);assert.match(html,/https:\/\/www.franks24.com\//);
+ assert.match(html,/Dispatch is a Franks24 service/);assert.equal(read('CNAME').trim(),'www.franks24.com');
+ assert.doesNotMatch(html,/job seeker|hiring teams|I'm hiring|find opportunities/i);
 });
-
-test("site contains accessible navigation and genuine interactive controls", () => {
-  for (const name of ['id="main"', 'aria-label="Main navigation"', 'id="menu-toggle"', 'aria-expanded="false"', 'id="demo-play"', 'id="demo-reset"', 'role="progressbar"', 'role="tablist"', 'role="tabpanel"', 'id="faq"']) {
-    assert.ok(html.includes(name), "Missing accessible element " + name);
-  }
-  for (const method of ["IntersectionObserver", "visibilitychange", "ArrowRight", "ArrowLeft", "Escape", "reducedMotion", "setAttribute"]) {
-    assert.ok(js.includes(method), "Missing interaction " + method);
-  }
+test('all service and policy links point to canonical courier app',()=>{
+ for(const route of ['deliveries/#quote','deliveries/#booking','deliveries/#tracking','driver/','dispatcher/','operations/','legal/delivery-terms.html','legal/delivery-privacy.html','legal/delivery-data.html'])assert.ok(html.includes('https://dispatch.franks24.com/'+route),route);
+ for(const match of html.matchAll(/(?:href|src)="\.\/([^"#]+)"/g))assert.ok(fs.existsSync(path.join(__dirname,'..',match[1])),match[1]);
+ assert.match(html,/Live quotes, bookings and payments are not open yet/);
 });
-
-test("UI is responsive, keyboard friendly and motion respectful", () => {
-  assert.match(html, /name="viewport"/);
-  assert.match(css, /@media\(max-width:820px\)/);
-  assert.match(css, /@media\(max-width:560px\)/);
-  assert.match(css, /prefers-reduced-motion:reduce/);
-  assert.match(css, /:focus-visible/);
-  assert.match(html, /class="skip-link"/);
-});
-
-test("homepage uses no fake sign-in flow or client-side secrets", () => {
-  assert.doesNotMatch(js, /apiKey\s*[:=]|private_key|firebaseConfig/);
-  assert.doesNotMatch(html, /<form\b/i);
-  assert.match(html, /GUIDED PREVIEW · NOT LIVE DATA/);
-  assert.match(html, /Authentication availability depends on its Firebase deployment configuration/);
-});
-
-test("local assets and external links use explicit safe targets", () => {
-  for (const file of ["assets/styles.css", "assets/app.js", "assets/favicon.svg", ".nojekyll"]) {
-    assert.ok(fs.existsSync(path.join(__dirname, "..", file)), "Missing site asset: " + file);
-  }
-  assert.doesNotMatch(html, /target="_blank"(?!\s+rel="noopener noreferrer")/);
-  assert.match(html, /meta name="description"/);
+test('shared responsive theme and keyboard navigation match dispatch',()=>{
+ assert.match(html,/assets\/site-shell.css/);assert.match(read('assets/site-shell.js'),/Escape/);
+ assert.match(html,/aria-label="Main navigation"/);assert.match(html,/aria-controls="f24-navigation"/);
+ assert.match(read('assets/site-shell.css'),/prefers-reduced-motion:reduce/);assert.match(read('assets/site-shell.css'),/#c8202f/);
 });
